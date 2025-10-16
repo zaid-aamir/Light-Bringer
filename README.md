@@ -1,0 +1,2 @@
+# Light Bringer
+Climb a forgotten tower with only a flickering candle to guide your way. Each step upward reveals fragments of lost stories etched into the darkness — memories waiting to be rekindled. As the flame fades, the world around you begins to rebuild itself in the glow of your light.  Your journey ends at the tower’s peak, where a single bell waits to be rung, carrying hope through the silence.

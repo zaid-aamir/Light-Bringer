@@ -1,7 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private GameObject HandCandle; // Candle object in player’s hand
+    private SpriteRenderer sp;
     private Rigidbody2D rb;
 
     [Header("Movement Settings")]
@@ -17,9 +20,20 @@ public class PlayerMovement : MonoBehaviour
     public bool AnimationStart = false;
     private float glideTargetY;
 
+    [Header("Sprites")]
+    public Sprite finishedSprite; // Holding candle sprite
+    public Sprite startSprite;    // Default sprite
+
     void Start()
     {
+        sp = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+
+        // Make sure player starts with base sprite
+        sp.sprite = startSprite;
+
+        // Hide candle at the beginning
+        HandCandle.SetActive(false);
     }
 
     void Update()
@@ -57,6 +71,15 @@ public class PlayerMovement : MonoBehaviour
                 // Restore gravity and unlock X movement
                 rb.gravityScale = 1f;
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+                // Switch to holding candle sprite
+                sp.sprite = finishedSprite;
+                Debug.Log("Sprite changed to finishedSprite!");
+
+                // Show the hand candle and attach it to player
+                HandCandle.SetActive(true);
+                HandCandle.transform.SetParent(this.transform);
+                HandCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
             }
         }
     }

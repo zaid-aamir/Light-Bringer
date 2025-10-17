@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Candle
+  - Convo1
+  - Note1
   layers:
   - Default
   - TransparentFX
@@ -45,4 +47,7 @@ TagManager:
     locked: 0
   - name: Decorations
     uniqueID: 2211444769
+    locked: 0
+  - name: New Layer 2
+    uniqueID: 2654113599
     locked: 0

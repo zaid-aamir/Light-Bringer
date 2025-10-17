@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using UnityEditor;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private GameObject handCandle; // Candle that appears in hand
+    [SerializeField] private GameObject handCandle;
     private SpriteRenderer sp;
     private Rigidbody2D rb;
 
@@ -21,24 +25,30 @@ public class PlayerMovement : MonoBehaviour
     private float glideTargetY;
 
     [Header("Sprites")]
-    public Sprite finishedSprite; // Sprite when holding candle
-    public Sprite startSprite;    // Default sprite
+    public Sprite finishedSprite;
+    public Sprite startSprite;
+
+    [Header("UI")]
+    [SerializeField] private Text noteText;
+    [SerializeField] private string noteMessage = "Continue the path to the castle...";
 
     void Start()
     {
         sp = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
 
-        // Start with default sprite
         sp.sprite = startSprite;
-
-        // Hide the in-hand candle until needed
         handCandle.SetActive(false);
+
+        if (noteText != null)
+        {
+            noteText.gameObject.SetActive(false);
+        }
     }
 
     void Update()
     {
-        if (!isGliding) // Normal movement
+        if (!isGliding)
         {
             float horizontalInput = Input.GetAxis("Horizontal");
             rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
@@ -55,28 +65,29 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isGliding)
         {
-            // Smoothly glide up
             rb.position = Vector2.MoveTowards(rb.position, new Vector2(rb.position.x, glideTargetY), glideSpeed * Time.fixedDeltaTime);
 
             if (Mathf.Abs(rb.position.y - glideTargetY) < 0.01f)
             {
                 isGliding = false;
 
-                // Snap to final position
                 rb.position = new Vector2(rb.position.x, glideTargetY);
 
-                // Restore gravity and X movement
                 rb.gravityScale = 1f;
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-                // Change to holding sprite
                 sp.sprite = finishedSprite;
 
-                // Activate in-hand candle and attach to player
                 handCandle.SetActive(true);
                 handCandle.transform.SetParent(transform);
                 handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
             }
+        }
+
+        if (SceneManager.GetActiveScene().name == "Tower")
+        {
+            sp.sprite = finishedSprite;
+            handCandle.SetActive(true);
         }
     }
 
@@ -89,21 +100,38 @@ public class PlayerMovement : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Candle"))
         {
-            // Start gliding
             isGliding = true;
             AnimationStart = true;
             glideTargetY = rb.position.y + glideHeight;
 
-            // Stop movement and disable gravity
             rb.velocity = Vector2.zero;
             rb.gravityScale = 0;
-
-            // Freeze X and rotation during glide
             rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePositionX;
 
-            // Hide or destroy the pickup candle immediately
             collision.gameObject.SetActive(false);
-            // Or: Destroy(collision.gameObject);
+        }
+
+        if (collision.gameObject.CompareTag("Note1"))
+        {
+            Destroy(collision.gameObject);
+
+            if (noteText != null)
+            {
+                noteText.text = noteMessage;
+                noteText.gameObject.SetActive(true);
+
+                // Start coroutine to hide after 10 seconds
+                StartCoroutine(HideNoteTextAfterDelay(10f));
+            }
+        }
+    }
+
+    private IEnumerator HideNoteTextAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (noteText != null)
+        {
+            noteText.gameObject.SetActive(false);
         }
     }
 }

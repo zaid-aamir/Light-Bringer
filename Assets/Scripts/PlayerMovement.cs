@@ -3,7 +3,7 @@
 public class PlayerMovement : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private GameObject HandCandle; // Candle object in player’s hand
+    [SerializeField] private GameObject handCandle; // Candle that appears in hand
     private SpriteRenderer sp;
     private Rigidbody2D rb;
 
@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     private float glideTargetY;
 
     [Header("Sprites")]
-    public Sprite finishedSprite; // Holding candle sprite
+    public Sprite finishedSprite; // Sprite when holding candle
     public Sprite startSprite;    // Default sprite
 
     void Start()
@@ -29,22 +29,20 @@ public class PlayerMovement : MonoBehaviour
         sp = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
 
-        // Make sure player starts with base sprite
+        // Start with default sprite
         sp.sprite = startSprite;
 
-        // Hide candle at the beginning
-        HandCandle.SetActive(false);
+        // Hide the in-hand candle until needed
+        handCandle.SetActive(false);
     }
 
     void Update()
     {
         if (!isGliding) // Normal movement
         {
-            // Horizontal movement
             float horizontalInput = Input.GetAxis("Horizontal");
             rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
-            // Jump
             if (Input.GetKeyDown(KeyCode.UpArrow) && isGrounded)
             {
                 rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
@@ -57,29 +55,27 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isGliding)
         {
-            // Glide smoothly up
+            // Smoothly glide up
             rb.position = Vector2.MoveTowards(rb.position, new Vector2(rb.position.x, glideTargetY), glideSpeed * Time.fixedDeltaTime);
 
-            // Stop gliding when reached target
             if (Mathf.Abs(rb.position.y - glideTargetY) < 0.01f)
             {
                 isGliding = false;
 
-                // Snap to final position to avoid bobbing
+                // Snap to final position
                 rb.position = new Vector2(rb.position.x, glideTargetY);
 
-                // Restore gravity and unlock X movement
+                // Restore gravity and X movement
                 rb.gravityScale = 1f;
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-                // Switch to holding candle sprite
+                // Change to holding sprite
                 sp.sprite = finishedSprite;
-                Debug.Log("Sprite changed to finishedSprite!");
 
-                // Show the hand candle and attach it to player
-                HandCandle.SetActive(true);
-                HandCandle.transform.SetParent(this.transform);
-                HandCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
+                // Activate in-hand candle and attach to player
+                handCandle.SetActive(true);
+                handCandle.transform.SetParent(transform);
+                handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
             }
         }
     }
@@ -96,7 +92,6 @@ public class PlayerMovement : MonoBehaviour
             // Start gliding
             isGliding = true;
             AnimationStart = true;
-
             glideTargetY = rb.position.y + glideHeight;
 
             // Stop movement and disable gravity
@@ -105,6 +100,10 @@ public class PlayerMovement : MonoBehaviour
 
             // Freeze X and rotation during glide
             rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePositionX;
+
+            // Hide or destroy the pickup candle immediately
+            collision.gameObject.SetActive(false);
+            // Or: Destroy(collision.gameObject);
         }
     }
 }

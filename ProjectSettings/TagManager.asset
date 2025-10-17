@@ -8,6 +8,7 @@ TagManager:
   - Candle
   - Convo1
   - Note1
+  - Wall
   layers:
   - Default
   - TransparentFX

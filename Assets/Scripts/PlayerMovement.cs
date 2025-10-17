@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEditor;
 using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
@@ -44,6 +43,15 @@ public class PlayerMovement : MonoBehaviour
         {
             noteText.gameObject.SetActive(false);
         }
+
+        // Tower scene: start with torch
+        if (SceneManager.GetActiveScene().name == "Tower")
+        {
+            sp.sprite = finishedSprite;
+            handCandle.SetActive(true);
+            handCandle.transform.SetParent(transform);
+            handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
+        }
     }
 
     void Update()
@@ -83,12 +91,6 @@ public class PlayerMovement : MonoBehaviour
                 handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
             }
         }
-
-        if (SceneManager.GetActiveScene().name == "Tower")
-        {
-            sp.sprite = finishedSprite;
-            handCandle.SetActive(true);
-        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -120,9 +122,23 @@ public class PlayerMovement : MonoBehaviour
                 noteText.text = noteMessage;
                 noteText.gameObject.SetActive(true);
 
-                // Start coroutine to hide after 10 seconds
                 StartCoroutine(HideNoteTextAfterDelay(10f));
             }
+        }
+
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            // Stop horizontal velocity when touching a wall
+            rb.velocity = new Vector2(0, rb.velocity.y);
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            // Prevent wall sticking by locking horizontal movement
+            rb.velocity = new Vector2(0, rb.velocity.y);
         }
     }
 

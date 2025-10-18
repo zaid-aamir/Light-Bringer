@@ -29,7 +29,15 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private Text noteText;
-    [SerializeField] private string noteMessage = "Continue the path to the castle...";
+
+    [System.Serializable]
+    public class NoteData
+    {
+        public string noteTag;     // e.g. "Note1", "Note2"
+        [TextArea] public string noteMessage; // message shown
+    }
+
+    [SerializeField] private NoteData[] notes; // all notes set in inspector
 
     void Start()
     {
@@ -118,16 +126,21 @@ public class PlayerMovement : MonoBehaviour
             collision.gameObject.SetActive(false);
         }
 
-        if (collision.gameObject.CompareTag("Note1"))
+        // Check if collided with any note tag
+        foreach (NoteData note in notes)
         {
-            Destroy(collision.gameObject);
-
-            if (noteText != null)
+            if (collision.gameObject.CompareTag(note.noteTag))
             {
-                noteText.text = noteMessage;
-                noteText.gameObject.SetActive(true);
+                Destroy(collision.gameObject);
 
-                StartCoroutine(HideNoteTextAfterDelay(10f));
+                if (noteText != null)
+                {
+                    noteText.text = note.noteMessage;
+                    noteText.gameObject.SetActive(true);
+
+                    StartCoroutine(HideNoteTextAfterDelay(10f));
+                }
+                break; // stop checking once matched
             }
         }
 

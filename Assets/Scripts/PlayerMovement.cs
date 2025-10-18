@@ -67,6 +67,11 @@ public class PlayerMovement : MonoBehaviour
                 isGrounded = false;
             }
         }
+
+        if (transform.position.y <= -20f)
+        {
+            SceneManager.LoadScene("DeathScene");
+        }
     }
 
     void FixedUpdate()

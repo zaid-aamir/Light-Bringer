@@ -26,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Sprites")]
     public Sprite finishedSprite;
     public Sprite startSprite;
+    [SerializeField] private Sprite handOutSprite; // <-- new sprite for F-key
 
     [Header("UI")]
     [SerializeField] private Text noteText;
@@ -39,13 +40,23 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private NoteData[] notes; // all notes set in inspector
 
+    // Candle positions relative to player
+    private Vector2 candleIdleRight = new Vector2(0.8f, -0.239f);
+    private Vector2 candleIdleLeft = new Vector2(-0.756f, -0.239f);
+    private Vector2 candleHandOutRight = new Vector2(0.8f, -0.013f);
+    private Vector2 candleHandOutLeft = new Vector2(-0.756f, -0.013f);
+
     void Start()
     {
         sp = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
 
         sp.sprite = startSprite;
-        handCandle.SetActive(false);
+
+        if (handCandle != null)
+        {
+            handCandle.SetActive(false);
+        }
 
         if (noteText != null)
         {
@@ -58,24 +69,58 @@ public class PlayerMovement : MonoBehaviour
             sp.sprite = finishedSprite;
             handCandle.SetActive(true);
             handCandle.transform.SetParent(transform);
-            handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
+
+            // Start with candle on right by default
+            handCandle.transform.localPosition = candleIdleRight;
         }
     }
 
     void Update()
     {
-        if (!isGliding)
-        {
-            float horizontalInput = Input.GetAxis("Horizontal");
-            rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
+        // --- Movement ---
+        float horizontalInput = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
-            if (Input.GetKeyDown(KeyCode.UpArrow) && isGrounded)
+        // Flip sprite and candle based on movement direction
+        if (horizontalInput > 0.01f)
+        {
+            sp.flipX = false;
+            if (!Input.GetKey(KeyCode.F)) handCandle.transform.localPosition = candleIdleRight;
+        }
+        else if (horizontalInput < -0.01f)
+        {
+            sp.flipX = true;
+            if (!Input.GetKey(KeyCode.F)) handCandle.transform.localPosition = candleIdleLeft;
+        }
+
+        if (Input.GetKeyDown(KeyCode.UpArrow) && isGrounded)
+        {
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            isGrounded = false;
+        }
+
+        // --- F-key sprite switch and candle movement ---
+        if (Input.GetKeyDown(KeyCode.F) && handOutSprite != null)
+        {
+            sp.sprite = handOutSprite;
+            if (handCandle != null)
             {
-                rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-                isGrounded = false;
+                handCandle.SetActive(true);
+                handCandle.transform.SetParent(transform);
+                handCandle.transform.localPosition = sp.flipX ? candleHandOutLeft : candleHandOutRight;
             }
         }
 
+        if (Input.GetKeyUp(KeyCode.F))
+        {
+            sp.sprite = startSprite;
+            if (handCandle != null)
+            {
+                handCandle.transform.localPosition = sp.flipX ? candleIdleLeft : candleIdleRight;
+            }
+        }
+
+        // --- Death check ---
         if (transform.position.y <= -20f)
         {
             SceneManager.LoadScene("DeathScene");
@@ -91,17 +136,17 @@ public class PlayerMovement : MonoBehaviour
             if (Mathf.Abs(rb.position.y - glideTargetY) < 0.01f)
             {
                 isGliding = false;
-
                 rb.position = new Vector2(rb.position.x, glideTargetY);
-
                 rb.gravityScale = 1f;
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-
                 sp.sprite = finishedSprite;
 
-                handCandle.SetActive(true);
-                handCandle.transform.SetParent(transform);
-                handCandle.transform.localPosition = new Vector2(0.8f, -0.239f);
+                if (handCandle != null)
+                {
+                    handCandle.SetActive(true);
+                    handCandle.transform.SetParent(transform);
+                    handCandle.transform.localPosition = sp.flipX ? candleIdleLeft : candleIdleRight;
+                }
             }
         }
     }
@@ -126,7 +171,6 @@ public class PlayerMovement : MonoBehaviour
             collision.gameObject.SetActive(false);
         }
 
-        // Check if collided with any note tag
         foreach (NoteData note in notes)
         {
             if (collision.gameObject.CompareTag(note.noteTag))
@@ -140,13 +184,12 @@ public class PlayerMovement : MonoBehaviour
 
                     StartCoroutine(HideNoteTextAfterDelay(10f));
                 }
-                break; // stop checking once matched
+                break;
             }
         }
 
         if (collision.gameObject.CompareTag("Wall"))
         {
-            // Stop horizontal velocity when touching a wall
             rb.velocity = new Vector2(0, rb.velocity.y);
         }
     }
@@ -155,7 +198,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Wall"))
         {
-            // Prevent wall sticking by locking horizontal movement
             rb.velocity = new Vector2(0, rb.velocity.y);
         }
     }
